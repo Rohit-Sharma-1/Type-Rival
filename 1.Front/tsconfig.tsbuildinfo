@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/declaration.d.ts","./src/main.tsx","./src/components/game.tsx","./src/components/home.tsx","./src/components/room.tsx","./src/components/ui/background-beams-with-collision.tsx","./src/lib/utils.ts"],"version":"5.9.3"}
