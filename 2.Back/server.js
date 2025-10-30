@@ -16,18 +16,42 @@ const port = 3000;
 app.use(cors()); 
 app.use(express.json()); // Middleware to parse JSON bodies
 
-const rooms = new Map(); //stores roomId -> { players: [], text: "" }
+const rooms = new Map(); // stores roomId -> { players: [], text: "" }
+
+// 🧠 Local random word pool
+const wordSets = [
+  "The quick brown fox jumps over the lazy dog in the sunny park",
+  "Coding at midnight feels like a superpower until the bugs appear",
+  "React components are fun until props start misbehaving again",
+  "Every developer has tried turning it off and on at least twice",
+  "JavaScript is the only language that can confuse and impress simultaneously",
+  "Typing speed means nothing when autocorrect is your true enemy",
+  "Socket connections are like friendships — easy to start, hard to maintain",
+  "Bugs in code are like mosquitoes — always appearing where you least expect",
+  "Sometimes the best debug tool is a long walk and a cup of coffee",
+  "Deploying on Friday is an extreme sport for true developers",
+];
+
+// 🧩 Generate random text of exactly 40 words
+function generateRandomText(wordCount = 70) {
+  const allWords = wordSets.join(" ").split(" ");
+  let result = [];
+  for (let i = 0; i < wordCount; i++) {
+    const randomIndex = Math.floor(Math.random() * allWords.length);
+    result.push(allWords[randomIndex]);
+  }
+  return result.join(" ");
+}
+
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
   // Handle room creation
-  socket.on("createRoom", async() => {
+  socket.on("createRoom", async () => {
     const roomId = Math.random().toString(36).substring(2, 10);
 
-    // Fetch random text here, ONCE per room
-    const response = await fetch("https://baconipsum.com/api/?type=all-meat&paras=1");
-    const data = await response.json();
-    const text = data[0].split(" ").slice(0, 40).join(" ");
+    // 🧠 Generate local random text instead of fetching from API
+    const text = generateRandomText(70);
 
     socket.join(roomId);
     rooms.set(roomId, { players: [socket.id], text: text || "" });
@@ -38,7 +62,6 @@ io.on("connection", (socket) => {
 
   // Handle joining a room
   socket.on("joinRoom", ({ joinUserName, joinRoomId }) => {
-
     console.log("Trying to join room:", joinRoomId);
 
     const room = rooms.get(joinRoomId);
@@ -60,14 +83,12 @@ io.on("connection", (socket) => {
 
   // Handle rejoining a room
   socket.on("rejoinRoom", (roomId) => {
-
     socket.join(roomId);
     console.log(`🔁 ${socket.id} rejoined room: ${roomId}`);
   });
 
   // Handle progress updates
   socket.on("progressUpdate", ({ roomId, progress }) => {
-
     console.log(io.sockets.adapter.rooms);
     socket.to(roomId).emit("opponentProgress", { progress });
   });
