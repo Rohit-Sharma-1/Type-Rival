@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const socket = io("http://localhost:3000");
+const socket = io("https://type-rival.onrender.com");
 
 const Room = () => {
   const navigate = useNavigate();
