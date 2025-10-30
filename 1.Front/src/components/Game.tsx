@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
-import {useLocation, useNavigate} from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 const socket = io("http://localhost:3000");
 
 const GamePage = () => {
-
   const navigate = useNavigate();
   const location = useLocation();
   const targetText =
-  location.state?.text || "The quick brown fox jumps over the lazy dog.";
+    location.state?.text || "The quick brown fox jumps over the lazy dog.";
   const roomId = location.state?.roomId || "empty-room";
 
   const [typed, setTyped] = useState("");
@@ -22,7 +21,6 @@ const GamePage = () => {
   const [errors, setErrors] = useState(0);
   const cursorRef = useRef<HTMLSpanElement>(null);
   const [winner, setWinner] = useState<string | null>(null);
-
 
   // 🔄 Rejoin room if page refreshed
   useEffect(() => {
@@ -70,8 +68,8 @@ const GamePage = () => {
       const opponent = opponentProgress;
 
       let result: string | null = null;
-      
-      if(errors>0){
+
+      if (errors > 0) {
         result = "😔 You lost! You made mistakes.";
       }
       if (me === 1 && opponent < 1) {
@@ -103,7 +101,7 @@ const GamePage = () => {
 
   // 🕒 Timer with 30-second cap
   useEffect(() => {
-    let timer: number;
+    let timer: ReturnType<typeof setTimeout>;
     if (started && !finished) {
       timer = setInterval(() => {
         setTime((t) => {
@@ -147,16 +145,21 @@ const GamePage = () => {
   // 🧮 Stats after finish
   useEffect(() => {
     if (finished) {
-      const words = typed.trim().split(" ").length;
-      const minutes = time / 60;
-      const grossWpm = Math.round(words / minutes || 0);
+      // Avoid dividing by zero if time is 0
+      const words = typed.trim().split(/\s+/).filter(Boolean).length;
+      const minutes = time > 0 ? time / 60 : 1;
+      const grossWpm = Math.round(words / minutes);
 
-      const wrongChars = [...typed].filter(
-        (ch, i) => ch !== targetText[i]
+      // Use Array.from instead of [...string] for better TS support
+      const typedChars = Array.from(typed);
+      const targetChars = Array.from(targetText);
+
+      const wrongChars = typedChars.filter(
+        (ch, i) => ch !== targetChars[i]
       ).length;
 
       setErrors(wrongChars);
-      setWpm(grossWpm);
+      setWpm(isNaN(grossWpm) ? 0 : grossWpm);
     }
   }, [finished, time, typed, targetText]);
 
@@ -172,7 +175,7 @@ const GamePage = () => {
   }, [typed]);
 
   const reset = () => {
-    navigate('/room');
+    navigate("/room");
   };
 
   const renderText = () => {
@@ -231,7 +234,6 @@ const GamePage = () => {
       )}
       {finished && (
         <div className="flex w-4/5 h-[450px] bg-gray-800 p-10 rounded-xl shadow-lg overflow-hidden relative">
-
           <h1 className="absolute top-20 left-102 text-5xl font-bold mb-4 text-fuchsia-500 text-center">
             {winner}
           </h1>
@@ -242,10 +244,10 @@ const GamePage = () => {
             Restart
           </button>
           <p className="absolute bottom-15 left-60 transform  text-green-400 text-3xl text-center">
-           WPM: {wpm}
+            WPM: {wpm}
           </p>
           <p className="absolute bottom-15 left-200 transform  text-red-400 text-3xl text-center">
-           Errors: {errors}
+            Errors: {errors}
           </p>
         </div>
       )}

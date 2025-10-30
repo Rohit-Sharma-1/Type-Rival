@@ -1,4 +1,3 @@
-import React, { use } from "react";
 import Ribbons from "./ui/Ribbons";
 import { io } from "socket.io-client";
 import { useEffect, useState } from "react";
@@ -72,7 +71,7 @@ const Room = () => {
         Create or Join the Game Room
       </h1>
 
-      <div className="absolute top-16 left-111 h-[450px] w-[650px] mt-35 rounded-lg items-center justify-center bg-gradient-to-b from-black via-neutral-900 to-gray-800 flex flex-col">
+      <div className="absolute top-16 left-111 h-[450px] w-[650px] mt-35 rounded-lg items-center justify-center bg-linear-to-b from-black via-neutral-900 to-gray-800 flex flex-col">
         {createRoomId === "" && (
           <div className="flex mt-3">
             <div className="border border-gray-600 rounded-lg p-8 m-4 flex flex-col items-center shadow-[0_0_20px_rgba(217,70,239,0.5)]">

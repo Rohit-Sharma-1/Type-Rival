@@ -1,13 +1,12 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
   "compilerOptions": {
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
-  }
+    },
+    "esModuleInterop": true,      // 👈 ADD THIS LINE
+    "allowSyntheticDefaultImports": true,
+  },
+  "include": ["src", "declarations.d.ts"]
 }
