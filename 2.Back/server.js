@@ -16,8 +16,6 @@ const port = process.env.PORT || 3000; // ✅ Render gives its own port
 app.use(cors());
 app.use(express.json());
 
-const rooms = new Map();
-
 // 🧠 Local random word pool
 const wordSets = [
   "The quick brown fox jumps over the lazy dog in the sunny park",
@@ -43,6 +41,7 @@ function generateRandomText(wordCount = 40) {
   return result.join(" ");
 }
 
+const rooms = new Map();
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
@@ -51,7 +50,11 @@ io.on("connection", (socket) => {
     const text = generateRandomText(40);
 
     socket.join(roomId);
-    rooms.set(roomId, { players: [socket.id], text });
+    rooms.set(roomId, {
+      players: new Map([[socket.id, { errors: null }]]),
+      text,
+      winner: null,
+    });
     socket.emit("roomCreated", roomId);
 
     console.log(`Room created with ID: ${roomId}`);
@@ -62,17 +65,24 @@ io.on("connection", (socket) => {
     const room = rooms.get(joinRoomId);
     console.log("Room found:", room);
 
-    if (room && room.players.length < 2) {
-      room.players.push(socket.id);
+    if (room && room.players.size < 2) {
+      room.players.set(socket.id, { errors: null });
       socket.join(joinRoomId);
       socket.emit("roomJoined", joinRoomId);
       console.log(`✅ ${socket.id} joined room ${joinRoomId}`);
-    }
-    if (room && room.players.length === 2) {
-      io.to(joinRoomId).emit("startGame", { text: room.text, roomId: joinRoomId });
-      console.log(`🚀 Game started for room: ${joinRoomId}`);
-    } else {
-      console.log("Failed to join room");
+
+      // Start game if this makes 2 players
+      if (room.players.size === 2) {
+        io.to(joinRoomId).emit("startGame", {
+          text: room.text,
+          roomId: joinRoomId,
+        });
+        console.log(`🚀 Game started for room: ${joinRoomId}`);
+      }
+    } else if (!room) {
+      console.log("❌ No such room to join");
+    } else if (room.players.size >= 2) {
+      console.log("⚠️ Room already full");
     }
   });
 
@@ -83,6 +93,38 @@ io.on("connection", (socket) => {
 
   socket.on("progressUpdate", ({ roomId, progress }) => {
     socket.to(roomId).emit("opponentProgress", { progress });
+  });
+
+  socket.on("playerFinished", ({ roomId, errors }) => {
+    console.log("📩 playerFinished event received:");
+
+    const room = rooms.get(roomId);
+    if (!room) {
+      console.log("❌ No room found for:", roomId);
+      return;
+    }
+    console.log(room.players);
+    // Store player's final result
+    room.players.set(socket.id, { errors });
+
+    // Check how many players are in the room
+    const playerCount = room.players.size;
+    console.log(playerCount);
+
+    // 🏁 Check if this player finished first
+    if (!room.winner && errors === 0) {
+      room.winner = socket.id;
+      io.to(roomId).emit("gameOver", {
+        winnerId: socket.id,
+        reason: "finished_first",
+      });
+      console.log(`🎮 playerFinished: ${socket.id}, errors=${errors}`);
+      console.log("Room state:", {
+        playerCount: room.players.size,
+        currentWinner: room.winner,
+      });
+      return;
+    }
   });
 
   socket.on("disconnect", () => {

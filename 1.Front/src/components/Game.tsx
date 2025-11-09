@@ -59,35 +59,33 @@ const GamePage = () => {
   useEffect(() => {
     if (typed.length === targetText.length && !finished) {
       setFinished(true);
+      console.log("player finished event enabled")
+      socket.emit("playerFinished", { roomId, errors});
     }
-  }, [typed, finished, roomId, targetText.length]);
+  }, [typed, finished]);
 
   useEffect(() => {
-    if (finished) {
-      const me = typed.length / targetText.length;
-      const opponent = opponentProgress;
-
-      let result: string | null = null;
-
-      if (errors > 0) {
-        result = "😔 You lost! You made mistakes.";
+    const handleWinner = ({ winnerId, reason }) => {
+      try {
+        const isMe = winnerId === socket.id;
+        if (reason === "finished_first") {
+          setWinner(
+            isMe
+              ? "🏆 You finished first and won!"
+              : "😞 Your opponent finished first!"
+          );
+        }else {
+          setWinner("Game over! No clear winner this time.");
+        }
+      } catch (err) {
+        console.error(err);
       }
-      if (me === 1 && opponent < 1) {
-        result = "🏆 You won !";
-      } else if (opponent === 1 && me < 1) {
-        result = "😔 You lost! Opponent finished first.";
-      } else if (me === 1 && opponent === 1) {
-        result = "🤝 It's a tie!";
-      } else {
-        // Timer ended, no one finished — decide by progress
-        if (me > opponent) result = "🏆 You won!";
-        else if (me < opponent) result = "😔 You lost!";
-        else result = "🤝 It's a tie!";
-      }
-
-      setWinner(result);
-    }
-  }, [finished]);
+    };
+    socket.on("gameOver", handleWinner);
+    return () => {
+      socket.off("gameOver", handleWinner);
+    };
+  }, []);
 
   // ⏳ Countdown before start
   useEffect(() => {
@@ -107,6 +105,8 @@ const GamePage = () => {
         setTime((t) => {
           if (t >= 29) {
             setFinished(true);
+            console.log("countdown finished event enabled")
+            socket.emit("playerFinished", { roomId, errors});
             clearInterval(timer);
             return 30;
           }
@@ -234,9 +234,12 @@ const GamePage = () => {
       )}
       {finished && (
         <div className="flex w-4/5 h-[450px] bg-gray-800 p-10 rounded-xl shadow-lg overflow-hidden relative">
-          <h1 className="absolute top-20 left-102 text-5xl font-bold mb-4 text-fuchsia-500 text-center">
-            {winner}
-          </h1>
+          {winner && (
+            <h1 className="absolute top-20 left-55 text-5xl font-bold mb-4 text-fuchsia-500 text-center">
+              {winner}
+            </h1>
+          )}
+
           <button
             onClick={reset}
             className="absolute bottom-40 left-120  h-[50px] w-[200px] bg-fuchsia-700 hover:bg-fuchsia-900 px-6 py-2 rounded-lg font-semibold"
