@@ -24,8 +24,8 @@ const wordSets = [
   "Every developer has tried turning it off and on at least twice",
   "JavaScript is the only language that can confuse and impress simultaneously",
   "Typing speed means nothing when autocorrect is your true enemy",
-  "Socket connections are like friendships — easy to start, hard to maintain",
-  "Bugs in code are like mosquitoes — always appearing where you least expect",
+  "Socket connections are like friendships easy to start, hard to maintain",
+  "Bugs in code are like mosquitoes always appearing where you least expect",
   "Sometimes the best debug tool is a long walk and a cup of coffee",
   "Deploying on Friday is an extreme sport for true developers",
 ];
@@ -96,9 +96,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("playerFinished", ({ roomId, errors }) => {
+    const room = rooms.get(roomId);
+
+    if(room.winner){ // returns if a player already won
+      return;
+    }
+    
     console.log("📩 playerFinished event received:");
 
-    const room = rooms.get(roomId);
     if (!room) {
       console.log("❌ No room found for:", roomId);
       return;
@@ -109,7 +114,7 @@ io.on("connection", (socket) => {
 
     // Check how many players are in the room
     const playerCount = room.players.size;
-    console.log(playerCount);
+    console.log("Player Count: "+playerCount);
 
     // 🏁 Check if this player finished first
     if (!room.winner && errors === 0) {

@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
-
-const socket = io("https://type-rival.onrender.com");
+import { socket } from "./Socket";
 
 const GamePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const targetText =
-    location.state?.text || "The quick brown fox jumps over the lazy dog.";
+  location.state?.text || "The quick brown fox jumps over the lazy dog.";
   const roomId = location.state?.roomId || "empty-room";
 
   const [typed, setTyped] = useState("");
